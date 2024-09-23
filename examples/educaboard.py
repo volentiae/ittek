@@ -141,6 +141,8 @@ repb_pressed = False                   # Controlled by the port expander interru
 
 prev_buzzer_time = 0
 
+prev_temp_time = 0
+
 ########################################
 # FUNCTIONS
 def ctrlC():
@@ -249,7 +251,7 @@ def portExp_interrupt(pin):
 
 # EEPROM check and write defaults values
 def eeprom_check_and_defaults():
-    # Check if there is valid communication withthe EEPROM
+    # Check if the communication with the EEPROM is valid
     try:
         eeprom_val = eeprom.read_byte(EEPROM_MAX_ADDRESS)
         random_val = random.randint(0, 0xFF)
@@ -287,7 +289,7 @@ def eeprom_check_and_defaults():
 print("Educaboard Testprogram")
 print("----------------------")
 print("Drej på R7 (blå over displayet) indtil der er synlig tekst i displayet,")
-print("og husk at JP5 bøjle/jumper skal sidde til højre og JP13 til venstre")
+print("og husk at JP5 bøjle/jumper skal sidde til højre og JP13 til venstre.")
 print()
 
 # Splash screen on the LCD
@@ -310,7 +312,7 @@ lcd_contrast.freq(440)                      # Set PWM frequency on JP5
 lcd_contrast.duty(contrast_level)
 
 # Preformat LCD
-lcd.clear()                                 # Claer the splash screen
+lcd.clear()                                 # Clear the splash screen
 lcd.putstr("HH:MM:SS iv")
 lcd.move_to(0, 1)
 lcd.putstr("P:  0   T:    R:   0")
@@ -329,7 +331,7 @@ portExp_interrupt_detect = Pin(pin_portexp_int, Pin.IN, Pin.PULL_UP)
 portExp_interrupt_detect.irq(trigger = Pin.IRQ_FALLING, handler = portExp_interrupt)
 
 
-# EEPROM check and wite default values
+# EEPROM check and write default values
 lcd.move_to(3, 2)
 if (eeprom_check_and_defaults() == False):
     lcd.putstr("not")
@@ -340,11 +342,11 @@ else:
     eeprom_name_length = eeprom.read_byte(EEPROM_USER_NAME)    # The user name (handle), 20 + 1 bytes. post 0 = string length
     if (eeprom_name_length <= 20):
         user_name = eeprom.read_string(EEPROM_USER_NAME)
-        print("Hej %s, gå nu i gang med at teste dit Educaboard" % user_name)
+        print("Hej %s, gå nu i gang med at teste dit Educaboard.\nHvis du vil ændre navn så indtast et nyt, maks 20 tegn." % user_name)
         lcd.move_to(0, 3)
         lcd.putstr(user_name)
     else:
-        print("Indtast dit navn/kaldenavn på linien herunder, maks 20 bogstaver")
+        print("Indtast dit navn/kaldenavn på linien herunder, maks 20 tegn.")
 
 
 while True:
@@ -456,9 +458,12 @@ while True:
         
     
     # LMT87 temperature sensor
-    temp = temperature.get_temperature()
-    lcd.move_to(10, 1)
-    lcd.putstr("%3d" % temp)
+    if (ticks_diff(ticks_ms(), prev_temp_time) > 5000):  # Measure the tmperature every 5 s. ADC processing is slow so throttle back
+        temp = temperature.get_temperature()
+        lcd.move_to(10, 1)
+        lcd.putstr("%3d" % temp)
+        prev_temp_time = ticks_ms()
+    
     
     # SPI and port expander
     if (ticks_diff(ticks_ms(), prev_led23_toggle_time) > led23_on_off_time):
