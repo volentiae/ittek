@@ -109,7 +109,9 @@ class GPS_SIMPLE:
             uart.write("$PUBX,40,GSV,0,0,0,0*59\n")
             uart.write("$PUBX,40,VTG,0,0,0,0*5E\n")            
 
+        self.__frames_received = 0     # Clear frames received just in case some frames were received before initialization was completed
     
+
     def __parse_nmea_frame(self, string):# Change to parse all relevant frames: http://aprs.gids.nl/nmea/, no checksum validation
         
         if check_nmea_frame(string) == True:# Validate the frame against the checksum
